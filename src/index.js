@@ -44,14 +44,11 @@ function validRepo(value) {
   return match ? `${match[1]}/${match[2]}` : null;
 }
 
-async function github(path, env) {
-  if (!env.GITHUB_TOKEN) {
-    throw new Error("GITHUB_TOKEN secret is not configured.");
-  }
-
+async function github(path, token) {
+  if (!token) throw new Error("Manager GitHub access token was not provided.");
   const response = await fetch(`https://api.github.com/${path}`, {
     headers: {
-      "Authorization": `Bearer ${env.GITHUB_TOKEN}`,
+      "Authorization": `Bearer ${token}`,
       "Accept": "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
       "User-Agent": "BEKIUZ-Developer-AI",
@@ -89,10 +86,11 @@ async function analyze(request, env) {
     return json({ ok: false, error: "A task description is required." }, 400);
   }
 
+  const githubToken = request.headers.get("X-GitHub-Token") || env.GITHUB_TOKEN;
   try {
     const [repo, contents] = await Promise.all([
-      github(`repos/${repository}`, env),
-      github(`repos/${repository}/contents`, env),
+      github(`repos/${repository}`, githubToken),
+      github(`repos/${repository}/contents`, githubToken),
     ]);
 
     const files = Array.isArray(contents)
