@@ -1,0 +1,9 @@
+name = "bekiuz-developer-ai"
+main = "src/index.js"
+compatibility_date = "2026-11-19"
+
+[vars]
+AI_MODEL = "@cf/google/gemma-4-26b-a4-it"
+
+[ai]
+binding = "AI"
