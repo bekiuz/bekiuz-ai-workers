@@ -136,8 +136,11 @@ async function analyze(request, env) {
 
         const ai = await env.AI.run(env.AI_MODEL, {
           messages: [{ role: "user", content: prompt }],
+          chat_template_kwargs: { enable_thinking: false },
         });
-        result.ai_review = ai?.response || ai?.output_text || null;
+        const candidates = [ai?.response, ai?.output_text, ai?.choices?.[0]?.message?.content, ai?.result?.response, ai?.result?.choices?.[0]?.message?.content];
+        const review = candidates.find((value) => typeof value === "string" && value.trim());
+        result.ai_review = review || "AI modeli javob berdi, ammo matn maydoni topilmadi. Texnik javob formati tekshirilishi kerak.";
       } catch {
         result.ai_review = "AI tahlili hozircha bajarilmadi; repository ma'lumotlari olindi.";
       }
