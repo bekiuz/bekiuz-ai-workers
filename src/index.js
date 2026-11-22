@@ -72,7 +72,7 @@ async function collectFiles(repository, token) {
   for (const item of entries) {
     if (item.type === "file" && isReviewable(item.path) && !candidates.some((c) => c.path === item.path)) candidates.push(item);
   }
-  for (const folder of entries.filter((e) => e.type === "dir" && ["src", "app", "pages", "api", "server"].includes(e.name)) {
+  for (const folder of entries.filter((e) => e.type === "dir" && ["src", "app", "pages", "api", "server"].includes(e.name))) {
     const sub = await github(`repos/${repository}/contents/${folder.path}`, token).catch(() => []);
     if (Array.isArray(sub)) {
       for (const item of sub) {
