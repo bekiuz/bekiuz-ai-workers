@@ -24,7 +24,7 @@ Set this secret in the Developer AI Worker:
 
 - `MANAGER_SHARED_SECRET`: must match `DEVELOPER_AI_SHARED_SECRET` on the BEKIUZ AI Manager.
 
-The Manager sends its existing GitHub token to Developer AI per request over HTTPS. The GitHub token is not stored in this Worker. Never commit real secrets or tokens to this repository.
+The Manager sends its existing GitHub token to Developer AI per request over HTTPS. The GitHub token is not stored in this Worker. Never commit real secrets or tokens to this repository. GitHub API requests time out after 10 seconds. Optional `ALLOWED_ORIGINS` is a comma-separated list of exact browser origins; when unset, cross-origin browser access is denied. Server-to-server Manager requests do not depend on CORS.
 
 ### Deploy
 
