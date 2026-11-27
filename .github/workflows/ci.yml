@@ -1,0 +1,20 @@
+name: Developer AI Worker checks
+
+on:
+  push:
+    branches: [main, security/strict-cors-tests-2026-11-27]
+  pull_request:
+    branches: [main]
+
+jobs:
+  worker-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Run Worker endpoint tests
+        run: node --test tests/worker.test.js
