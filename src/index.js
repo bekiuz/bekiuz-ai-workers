@@ -7,19 +7,31 @@ function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), { status, headers: JSON_HEADERS });
 }
 
-function corsHeaders(request) {
+function corsHeaders(request, env) {
   const origin = request.headers.get("Origin");
-  return {
-    "access-control-allow-origin": origin || "*",
+  const allowedOrigins = new Set(
+    String(env.ALLOWED_ORIGINS || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
+  const headers = {
     "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "Content-Type, Authorization",
+    "access-control-allow-headers": "Content-Type, Authorization, X-GitHub-Token",
+    "access-control-max-age": "600",
     "vary": "Origin",
   };
+
+  if (origin && allowedOrigins.has(origin)) {
+    headers["access-control-allow-origin"] = origin;
+  }
+
+  return headers;
 }
 
-function withCors(response, request) {
+function withCors(response, request, env) {
   const headers = new Headers(response.headers);
-  for (const [key, value] of Object.entries(corsHeaders(request))) headers.set(key, value);
+  for (const [key, value] of Object.entries(corsHeaders(request, env))) headers.set(key, value);
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
@@ -31,7 +43,7 @@ function authorized(request, env) {
 
 function validRepo(value) {
   if (typeof value !== "string") return null;
-  const match = value.trim().match(/^([A-Za-z0-9_.-]{1,100})\/([A-Za-z0-9_.-]{1,100})$/);
+  const match = value.trim().match(/^([A-Za-z0-9](?:[A-Za-z0-9_.-]{0,98}[A-Za-z0-9])?)\/([A-Za-z0-9](?:[A-Za-z0-9_.-]{0,98}[A-Za-z0-9])?)$/);
   return match ? `${match[1]}/${match[2]}` : null;
 }
 
@@ -44,6 +56,7 @@ async function github(path, token) {
       "X-GitHub-Api-Version": "2022-11-28",
       "User-Agent": "BEKIUZ-Developer-AI",
     },
+    signal: AbortSignal.timeout(10000),
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -169,11 +182,11 @@ async function analyze(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (request.method === "OPTIONS") return withCors(new Response(null, { status: 204 }), request);
+    if (request.method === "OPTIONS") return withCors(new Response(null, { status: 204 }), request, env);
     if (request.method === "GET" && url.pathname === "/health") {
-      return withCors(json({ ok: true, service: "BEKIUZ Developer AI", version: "0.2.0", mode: "read-only-code-review" }), request);
+      return withCors(json({ ok: true, service: "BEKIUZ Developer AI", version: "0.2.0", mode: "read-only-code-review" }), request, env);
     }
-    if (request.method === "POST" && url.pathname === "/api/analyze") return withCors(await analyze(request, env), request);
-    return withCors(json({ ok: false, error: "Not found" }, 404), request);
+    if (request.method === "POST" && url.pathname === "/api/analyze") return withCors(await analyze(request, env), request, env);
+    return withCors(json({ ok: false, error: "Not found" }, 404), request, env);
   },
 };
